@@ -10,9 +10,13 @@ import re
 
 # GPT 모델 설정
 MODEL = "gpt-4o"
-
+from dotenv import load_dotenv
+import os
+load_dotenv(r"C:\Users\senbo\Desktop\taba_project\ai_series\eee.env")  # .env 파일 로드
+api_key = os.getenv("OPENAI_API_KEY")
+client_id=os.getenv("client_id")
+client_secret=os.getenv("client_secret")
 # 네이버 OCR API 키 및 URL 설정
-client = openai.OpenAI()
 # 네이버 OCR 호출 함수
 def read_ocr(secret_key, api_url, image_file):
     request_json = {

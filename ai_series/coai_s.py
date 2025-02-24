@@ -8,6 +8,12 @@ import uuid
 import time
 import openai
 import re
+from dotenv import load_dotenv
+import os
+load_dotenv(r"C:\Users\senbo\Desktop\taba_project\ai_series\eee.env")  # .env 파일 로드
+api_key = os.getenv("OPENAI_API_KEY")
+client_id=os.getenv("client_id")
+client_secret=os.getenv("client_secret")
 MODEL = "gpt-4o"
 client = openai.OpenAI()
 #계약서원본양식
