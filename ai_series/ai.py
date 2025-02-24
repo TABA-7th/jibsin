@@ -24,7 +24,7 @@ def start_reg():
     output_file_path_2 = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\reg_m.jpg"
     test_s_1.request(img_list, output_file_path, output_file_path_2)
 
-start_ledger()
+start_coai()
 
 
 
