@@ -9,12 +9,14 @@ import os
 import numpy as np
 import os
 from dotenv import load_dotenv
-load_dotenv(r"C:\Users\senbo\Desktop\taba_project\ai_series\eee.env")  # .env 파일 로드
+load_dotenv(r"C:\Users\senbo\Desktop\taba_project\.env")  # .env 파일 로드
 api_key = os.getenv("OPENAI_API_KEY")
 client_id=os.getenv("client_id")
 client_secret=os.getenv("client_secret")
 MODEL = "gpt-4o"
-client = openai.OpenAI()
+client = openai.OpenAI(api_key=api_key)
+secret_key=os.getenv("secret_key")
+api_url=os.getenv("api_url")
 
 def remove_bounding_boxes(data):
     """Bounding Box 값을 제거하고 저장하는 함수"""
@@ -484,7 +486,7 @@ def process_all_json(input_dir):
         raise
 
 def request():
-    output_path = r"C:\Users\senbo\Desktop\python\rrr\test\solution.json"
+    output_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\solution.json"
     data=process_all_json(r"C:\Users\senbo\Desktop\python\rrr\test")
 
     # Bounding Box 제거 및 저장

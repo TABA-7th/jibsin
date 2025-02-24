@@ -7,18 +7,22 @@ import json
 import uuid
 import time
 import re
+import os
+import openai
+from dotenv import load_dotenv
+
 
 # GPT 모델 설정
 MODEL = "gpt-4o"
-from dotenv import load_dotenv
-import os
-load_dotenv(r"C:\Users\senbo\Desktop\taba_project\ai_series\eee.env")  # .env 파일 로드
+load_dotenv(r"C:\Users\senbo\Desktop\taba_project\.env")  # .env 파일 로드
 api_key = os.getenv("OPENAI_API_KEY")
-client_id=os.getenv("client_id")
-client_secret=os.getenv("client_secret")
+secret_key=os.getenv("secret_key")
+api_url=os.getenv("api_url")
+client = openai.OpenAI(api_key=api_key)
+
 # 네이버 OCR API 키 및 URL 설정
 # 네이버 OCR 호출 함수
-def read_ocr(secret_key, api_url, image_file):
+def read_ocr(image_file):
     request_json = {
         'images': [{'format': 'jpg', 'name': 'demo'}],
         'requestId': str(uuid.uuid4()),
@@ -51,7 +55,7 @@ def read_ocr(secret_key, api_url, image_file):
         raise ValueError(f"❌ OCR 요청 실패: {response.status_code} - {response.text}")
 
 # GPT 호출 함수
-def read_image(client, image_path, MODEL, df):
+def read_image(image_path, df):
     # OCR 데이터 JSON 변환
     df_json = json.dumps(df.to_dict(orient="records"), ensure_ascii=False)
 
@@ -172,17 +176,19 @@ def save_json(text: str, output_file: str) -> str:
 
 # 실행 함수
 def request(image_path,output_file_path):
-    # image_path = os.path.abspath(r"C:\Users\senbo\Desktop\taba\python\sibal\t2.jpg")
-    # output_file_path = os.path.abspath(r"C:\Users\senbo\Desktop\taba\python\eee\cleaned_ocr_result.json")
+# def request():
+#     image_path = r"C:\Users\senbo\Desktop\taba_project\test_st\ledger.jpg"
+#     output_file_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\ledger_result.json"
 
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"❌ 이미지 파일을 찾을 수 없습니다: {image_path}")
 
-    df = read_ocr(key, url, image_path)
+    df = read_ocr(image_path)
     if df.empty:
         raise ValueError("❌ OCR 결과가 없습니다.")
 
-    text = read_image(client, image_path, MODEL, df)
-    result = save_json(text, output_file_path)
+    text = read_image(image_path, df)
+    save_json(text, output_file_path)
 
 # request()
+

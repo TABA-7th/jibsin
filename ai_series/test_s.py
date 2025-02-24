@@ -14,10 +14,13 @@ from io import BytesIO
 from PIL import Image
 from dotenv import load_dotenv
 import os
-load_dotenv(r"C:\Users\senbo\Desktop\taba_project\ai_series\eee.env")  # .env 파일 로드
+load_dotenv(r"C:\Users\senbo\Desktop\taba_project\.env")  # .env 파일 로드
 api_key = os.getenv("OPENAI_API_KEY")
 client_id=os.getenv("client_id")
 client_secret=os.getenv("client_secret")
+client = openai.OpenAI(api_key=api_key)
+secret_key=os.getenv("secret_key")
+api_url=os.getenv("api_url")
 
 MODEL = "gpt-4o"
 #계약서원본양식
