@@ -97,7 +97,6 @@ def merge_images(image_paths, output_path_2):
     
     return merged_image
 
-
 def cre_ocr(image_path):
     # target_size = (1240, 1753)
     image = cv2.imread(image_path)
