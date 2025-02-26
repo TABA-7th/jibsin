@@ -17,8 +17,6 @@ MODEL = "gpt-4o"
 client = openai.OpenAI(api_key=api_key)
 secret_key=os.getenv("secret_key")
 api_url=os.getenv("api_url")
-#-------------------------네이버지도 api -----------------------------------------
-#-------------------------------------------------------------------------------
 def remove_bounding_boxes(data):
     """Bounding Box 값을 제거하고 저장하는 함수"""
     bounding_boxes = {}
@@ -106,8 +104,6 @@ def process_all_json(input_dir):
         raise
 
 
-#------------------------------[추가, 수정된 항목]-------------------------------------
-#-----------------------------[ana_3 수정]-------------------------------------
 def clean_json(data,res_1,cost):
     def analyze_with_gpt(analysis_data):
         """GPT API를 사용하여 분석을 수행하는 함수"""
