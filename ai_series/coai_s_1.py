@@ -392,7 +392,7 @@ def request(img_list, output_path):
         json.dump(json_result, f, ensure_ascii=False, indent=4)
     
     return output_path
-img_list = [rf"C:\Users\senbo\Desktop\taba_project\test_st\con_{i}.jpg" for i in range(1,4)]
+img_list = [rf"C:\Users\senbo\Desktop\taba_project\test_sc\con_{i}.jpg" for i in range(1,4)]
 # output_path_2=r"C:\Users\senbo\Desktop\taba\python\rrr\test\co_m.jpg"
-output_file_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\coai_result_a.json"
+output_file_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\coai_result_b.json"
 request(img_list,output_file_path)
