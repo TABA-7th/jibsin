@@ -106,7 +106,6 @@ def process_all_json(input_dir):
 
 def clean_json(data,res_1,cost):
     def analyze_with_gpt(analysis_data):
-        """GPT API를 사용하여 분석을 수행하는 함수"""
         response = client.chat.completions.create(
             model=MODEL,
             messages=[{
@@ -227,14 +226,14 @@ def clean_json(data,res_1,cost):
         if "ledger_result" in data:
             for key, sub_data in data["ledger_result"].items():
                 if isinstance(sub_data, dict):
-                    for target_key in ["대지위치", "도로명주소", "면적", "위반건축물"]:
+                    for target_key in ["대지위치", "도로명주소", "면적"]:
                         if target_key in sub_data:
                             analysis_data["ledger"][target_key] = sub_data[target_key]["text"]
 
         if "reg_result" in data:
             for key, sub_data in data["reg_result"].items():
                 if isinstance(sub_data, dict):
-                    for target_key in ["신탁", "가압류", "가등기", "가처분", "건물주소"]:
+                    for target_key in ["건물주소"]:
                         if target_key in sub_data:
                             analysis_data["register"][target_key] = sub_data[target_key]["text"]
 
@@ -258,10 +257,6 @@ def clean_json(data,res_1,cost):
 - 계약서에 기재된 **면적이 정확한가?**
 - **주소 일치 여부**가 nan이 아니면 주소가 일치하는 것으로 간주한다.  
 - 등기부등본과 계약서상의 주소 및 면적이 일치하는가?  
-
-**건물의 권리관계 확인**  
-- 등기부등본을 확인하여 **근저당, 가압류, 압류, 가등기, 경매개시결정을 확인했는가?**  
-- 건축물대장을 확인하여 **위반건축물을 확인했는가?**
 
 ⚠ **위 항목에서 문제가 발견될 경우, 해결 방법과 법적 보호 조치를 상세히 설명해줘.**  
 
@@ -299,7 +294,7 @@ def clean_json(data,res_1,cost):
         if "ledger_result" in data:
             for key, sub_data in data["ledger_result"].items():
                 if isinstance(sub_data, dict):
-                    for target_key in ["대지위치", "도로명주소", "면적", "위반건축물"]:
+                    for target_key in ["대지위치", "도로명주소", "면적"]:
                         if target_key in sub_data:
                             data["ledger_result"][key][target_key]["notice"] = result.get("notice", "")
                             data["ledger_result"][key][target_key]["solution"] = result.get("solution", "")
@@ -313,8 +308,78 @@ def clean_json(data,res_1,cost):
 
         return data
     #수정
+    def ana_2_2(data):
+
+        analysis_data = {
+            "ledger": {},
+            "register": {}
+        }
+        if "ledger_result" in data:
+            for key, sub_data in data["ledger_result"].items():
+                if isinstance(sub_data, dict):
+                    for target_key in ["위반건축물"]:
+                        if target_key in sub_data:
+                            analysis_data["ledger"][target_key] = sub_data[target_key]["text"]
+
+        if "reg_result" in data:
+            for key, sub_data in data["reg_result"].items():
+                if isinstance(sub_data, dict):
+                    for target_key in ["신탁", "가압류", "가처분"]:
+                        if target_key in sub_data:
+                            analysis_data["register"][target_key] = sub_data[target_key]["text"]
+
+        prompt = (f"""
+        다음은 부동산 계약 관련 문서의 위험매물 정보입니다.
+"""
+"""
+                    부동산 계약서에서 임대 목적물의 상태와 권리 관계를 점검하고, 문제가 없는지 확인해줘.  
+다음 항목을 기준으로 분석하고, 수정 또는 보완이 필요한 부분을 구체적으로 설명해줘.  
+
+**건물의 권리관계 확인**  
+- 등기부등본을 확인하여 **근저당, 가압류, 압류, 가등기, 경매개시결정을 확인했는가?**  
+- 건축물대장을 확인하여 **위반건축물을 확인했는가?**
+
+⚠ **위 항목에서 문제가 발견될 경우, 해결 방법과 법적 보호 조치를 상세히 설명해줘.**  
+
+
+                    내부적으로 모든 분석을 수행한 후, 최종적으로 아래 **JSON 형식으로만** 응답해.
+                    ```json
+                    {
+                      "notice": "발견된 문제 요약",
+                      "solution": "해결 방법 요약"
+                    }
+                    ```
+                    **출력 규칙:**
+                    - 문제가 있으면 `notice`에 **주요 문제 요약**을 입력하고, `solution`에 **해결 방법**을 제공해.
+                    - 문제가 없으면 다음과 같이 응답해:
+                      ```json
+                      {
+                        "notice": "문제 없음",
+                        "solution": "계약 진행 가능"
+                      }
+                      ```
+                    - JSON 형식 외의 설명을 포함하지 마.
+        """)
+
+        result = analyze_with_gpt(prompt)
+
+        if "ledger_result" in data:
+            for key, sub_data in data["ledger_result"].items():
+                if isinstance(sub_data, dict):
+                    for target_key in ["위반건축물"]:
+                        if target_key in sub_data:
+                            data["ledger_result"][key][target_key]["notice"] = result.get("notice", "")
+                            data["ledger_result"][key][target_key]["solution"] = result.get("solution", "")
+
+        if "reg_result" in data:
+            for key, sub_data in data["reg_result"].items():
+                if isinstance(sub_data, dict):
+                    for target_key in ["신탁", "가압류", "가처분"]:
+                        data["reg_result"][key][target_key]["notice"] = result.get("notice", "")
+                        data["reg_result"][key][target_key]["solution"] = result.get("solution", "")
+        return data
+    
     def ana_3(data,cost):
-#-------------------------[수정]-------------------------
         if isinstance(cost, (int, float)):  # 숫자인 경우만 실행
             cost=cost*70/69
         else:
@@ -496,6 +561,7 @@ def clean_json(data,res_1,cost):
 
     data = ana_1(data)
     data = ana_2(data, res_1)
+    data = ana_2_2(data)
     data = ana_3(data, cost)
     data = ana_4(data)
     data = ana_5(data)
