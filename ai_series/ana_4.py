@@ -17,6 +17,7 @@ MODEL = "gpt-4o"
 client = openai.OpenAI(api_key=api_key)
 secret_key=os.getenv("secret_key")
 api_url=os.getenv("api_url")
+
 def remove_bounding_boxes(data):
     """Bounding Box 값을 제거하고 저장하는 함수"""
     bounding_boxes = {}
@@ -34,7 +35,6 @@ def remove_bounding_boxes(data):
 
     traverse(data)
     return bounding_boxes
-
 def restore_bounding_boxes(data, bounding_boxes):
     """저장된 Bounding Box 값을 복원하는 함수"""
     def traverse(node, path=""):
@@ -47,7 +47,6 @@ def restore_bounding_boxes(data, bounding_boxes):
             for idx, item in enumerate(node):
                 traverse(item, f"{path}[{idx}]")
     traverse(data)
-
 def process_all_json(input_dir):
     try:
         # 파일 경로 설정
@@ -341,7 +340,8 @@ def building(data):
     return result['result']
 #실행(수정사항 포함)
 
-def solution(data):
+#------------------------[수정사항]--------------------------
+def solution_1(data): #등본, 건축물 대장 상 위험 매물, 면적, 계약기간, 임대차 기간, 특약 요약, 주소
 
     promt = (f"""
 {data}에서 'contract'는 계약서, 'building_registry'는 건축물 대장, 'registry_document'는 등기부등본이다.
@@ -350,10 +350,10 @@ def solution(data):
 
 1. 등기부등본에 '신탁', '압류', '가처분', '가압류', '가등기'가 있는지 확인
 2. 건축물대장에 '위반건축물'이 있는지 확인
-3. 등기부등본과 계약서상의 주소 및 면적이 일치하는지 확인
+3. 등기부등본과 계약서상의 면적이 일치하는지 확인
 4. 계약기간과 임대차 기간이 일치하는지 확인
-5. 특약사항과 특약에 해당하는 내용 요약
-
+5. 특약사항과 특약에 임차인에게 불리한 조항 확인
+6. 관리비_비정액에 값이 있고 관리비_정액에 값이 없으면 경고
 원본 데이터 구조를 유지하면서, 분석한 항목에 'notice'와 'solution' 필드를 추가해주세요.
 예를 들어, 등기부등본에 '가압류'가 있다면:
 """
@@ -391,6 +391,102 @@ def solution(data):
     result = analyze_with_gpt(promt)
 
     return result
+def solution_2(data): #사용자 이름
+    promt = (f"""
+{data}에서 'contract'는 계약서, 'building_registry'는 건축물 대장, 'registry_document'는 등기부등본이다.
+계약서에서 '임대인', 건축물대장에서 '성명', 등기부등본에서 '소유자'이 일치하는지 확인 할 것.
+성명, 소유자가 1명이 아닌 경우 공동명의로 판단한다.
+"""
+"""
+소유자가 한 명이 아니라면
+```
+"임대인": {
+  "text": "...",
+  "bounding_box": {...},
+  "notice": "소유자가 공동명의로 확인됩니다",
+  "solution": "다른 소유주의 확인 필요"
+}
+```
+건축물대장 '성명'과 등기부등본의 '소유자', 계약서의 '임대인' 중 일치하지 않는 것이 있다면
+```
+"소유자": {
+  "text": "...",
+  "bounding_box": {...},
+  "notice": "건축물 대장 혹은 계약서의 임대인과 일치하지 않습니다",
+  "solution": "임대인을 확실하게 확인하여 주십시오."
+}
+```
+
+임대인/성명/소유자 불일치는 해당 필드에 notice와 solution을 추가해주세요.
+문제가 없는 항목은 다음과 같이 추가해주세요:
+```
+"notice": "문제 없음",
+"solution": "계약 진행 가능"
+```
+
+원본 데이터의 모든 구조를 유지하고, 필요한 필드에만 notice와 solution을 추가하는 방식으로 결과를 JSON 형태로 반환해주세요.
+""")
+    result = analyze_with_gpt(promt)
+
+    return  result
+def solution_3(data,cost): #보증금, 근저당권, 공시가
+    promt = (f"""
+{data}에서 'contract'는 계약서, 'building_registry'는 건축물 대장, 'registry_document'는 등기부등본이다. {cost}는 공시가격이다.
+공시가격은 채권최고액 notice에 출력한다.
+"""
+"""
+다음 항목들을 분석하여 문제가 있으면 각 항목별로 notice와 solution을 추가해주세요:
+'보증금', '채권최고액' 외에는 notice, solution을 추가하지 않는다.
+1. 보증금 일관성 확인:
+   - 보증금_1과 보증금_2의 금액이 다른 경우 오류 메시지를 출력
+   - 금액 차이가 있는 경우 두 보증금 필드 모두에 오류 표시
+
+
+원본 데이터 구조를 유지하면서, 분석한 항목에 'notice'와 'solution' 필드를 추가해주세요.
+예를 들어, 보증금_1과 보증금_2의 금액이 다른 경우:
+
+```json
+"보증금_1": {
+  "text": "...",
+  "bounding_box": {...},
+  "notice": "보증금_2와 금액이 다릅니다",
+  "solution": "계약서 내용 확인 후 보증금 금액을 일치시켜야 합니다."
+}
+```
+
+채권최고액에 대한 분석 결과는 다음과 같이 추가해주세요:
+
+```json
+"채권최고액": {
+  "text": "...",
+  "bounding_box": {...},
+  "notice": "채권최고액이 보증금과 공시가격의 차이를 초과하는지 확인하세요",
+  "solution": "채권최고액은 보증금과 공시가격의 차이 이내로 설정하는 것이 안전합니다."
+}
+```
+
+공시가격이 없는 경우:
+
+```json
+"보증금_1": {
+  "text": "...",
+  "bounding_box": {...},
+  "notice": "공시가격 정보가 없어 적정 보증금 여부를 판단할 수 없습니다.",
+  "solution": "국토교통부 부동산 공시가격 알리미 등을 통해 공시가격(cost)을 확인하세요."
+}
+```
+
+
+문제가 없는 항목은 다음과 같이 추가해주세요:
+```json
+"notice": "문제 없음",
+"solution": "계약 진행 가능"
+```
+
+""")
+    result = analyze_with_gpt(promt)
+
+    return  result
 
 def find_keys_in_json(data):
     """
@@ -408,7 +504,7 @@ def find_keys_in_json(data):
         "위반건축물",  # 건축물 위반사항
         "신탁", "가압류", "가처분",  # 권리 제한 관련
         "보증금_1", "보증금_2", "차임_1", "차임_2",  # 금액 관련
-        "채권최고액",  # 채권 관련
+        "(채권최고액)",  # 채권 관련
         "관리비_정액", "관리비_비정액",  # 관리비 관련
         "임대차기간", "계약기간",  # 기간 관련
         "특약", "특약사항",  # 특약 관련
@@ -442,33 +538,80 @@ def find_keys_in_json(data):
             for key, value in page_data.items():
                 if key in target_keys:
                     result["registry_document"][key] = value
-    
-    # 최상위 레벨에 있을 수 있는 면적 정보 확인
-    if isinstance(data, dict):
-        address_info = {}
-        
-        # 최상위 레벨에서 시도, 시군구, 동리 등의 주소 정보와 면적 정보 수집
-        for key in ["시도", "시군구", "동리", "동명", "호명", "건물명"]:
-            if key in data:
-                address_info[key] = data[key]
-        
-        # 면적 관련 정보가 있으면 별도 섹션에 추가
-        if address_info:
-            result["address_info"] = address_info
-        
-        # 공시가격 정보가 있으면 추가
-        if "공시가격" in data:
-            result["property_value"] = {"공시가격": data["공시가격"]}
+
     
     return result
 
 
+def merge_analysis(sol_json, analysis_jsons):
+    """
+    구조가 동일한 여러 JSON에서 notice와 solution을 병합
+    모든 notice와 solution을 가져옴 (기본 메시지 포함)
+    
+    Args:
+        sol_json (dict): 원본 JSON
+        analysis_jsons (list): 분석 결과 JSON 리스트
+    
+    Returns:
+        dict: 병합된 JSON
+    """
+    # 각 섹션과 필드 순회
+    for section_key, section in sol_json.items():
+        for subsection_key, subsection in section.items():
+            for field_key, field_value in list(subsection.items()):  # list()로 감싸서 반복 중 수정 가능하게 함
+                notices = []
+                solutions = []
+                
+                # 각 분석 JSON에서 값 확인
+                for analysis in analysis_jsons:
+                    # 동일한 경로에 필드가 있는지 확인
+                    if (section_key in analysis and 
+                        subsection_key in analysis[section_key] and 
+                        field_key in analysis[section_key][subsection_key]):
+                        
+                        analysis_field = analysis[section_key][subsection_key][field_key]
+                        
+                        # notice와 solution이 있는지 확인
+                        if isinstance(analysis_field, dict):
+                            if "notice" in analysis_field:
+                                # 모든 notice 포함 (문제 없음도 포함)
+                                if analysis_field["notice"] not in notices:
+                                    notices.append(analysis_field["notice"])
+                            
+                            if "solution" in analysis_field:
+                                # 모든 solution 포함 (계약 진행 가능도 포함)
+                                if analysis_field["solution"] not in solutions:
+                                    solutions.append(analysis_field["solution"])
+                
+                # 결과 추가
+                if isinstance(field_value, dict):
+                    # 이미 딕셔너리인 경우
+                    if notices:
+                        sol_json[section_key][subsection_key][field_key]["notice"] = "; ".join(notices)
+                    
+                    if solutions:
+                        sol_json[section_key][subsection_key][field_key]["solution"] = "; ".join(solutions)
+                else:
+                    # 딕셔너리가 아닌 경우 변환
+                    if notices or solutions:
+                        new_field = {"text": field_value}
+                        
+                        if notices:
+                            new_field["notice"] = "; ".join(notices)
+                        
+                        if solutions:
+                            new_field["solution"] = "; ".join(solutions)
+                        
+                        sol_json[section_key][subsection_key][field_key] = new_field
+    
+    return sol_json
+    
+
 def request():
     output_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol_1.json"
     data=process_all_json(r"C:\Users\senbo\Desktop\taba_project\ai_series\result")
-    with open(r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
     bounding_boxes = remove_bounding_boxes(data)
+
     res_1 = building(data)
     if res_1 != "nan" and res_1 != "NA":
         try:
@@ -487,14 +630,17 @@ def request():
     # JSON 데이터 분석 및 처리
     print(cost)
     # Bounding Box 복원
-    restore_bounding_boxes(data, bounding_boxes)
-    found_keys = find_keys_in_json(data)
 
-    print(json.dumps(found_keys, indent=2, ensure_ascii=False))
-    result = solution(found_keys)
-    # 결과 저장
+
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+    result_1 = solution_1(data)
+    result_2 = solution_2(data)
+    result_3 = solution_3(data,cost)
+    merged_json = merge_analysis(data, [result_1, result_2, result_3])
+    result_json= restore_bounding_boxes(merged_json, bounding_boxes)
+
     with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=4)
+        json.dump(result_json, f, ensure_ascii=False, indent=4)
 
 
 
