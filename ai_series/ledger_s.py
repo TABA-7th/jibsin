@@ -7,7 +7,6 @@ import json
 import uuid
 import time
 import re
-import os
 import openai
 from dotenv import load_dotenv
 

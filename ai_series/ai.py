@@ -19,12 +19,12 @@ def start_coai():
     coai_s.request(img_list,output_file_path)
 
 def start_reg():
-    img_list = [rf"C:\Users\senbo\Desktop\taba_project\test_st\000{i}.jpg" for i in range(1,4)]
-    output_file_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\reg_result.json"
-    output_file_path_2 = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\reg_m.jpg"
+    img_list = [rf"C:\Users\senbo\Desktop\taba_project\test_sc\reg\000{i}.jpg" for i in range(1,3)]
+    output_file_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\reg_result_1.json"
+    output_file_path_2 = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\reg_m_1.jpg"
     test_s_1.request(img_list, output_file_path, output_file_path_2)
 
-start_coai()
+start_reg()
 
 
 

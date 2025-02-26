@@ -231,7 +231,7 @@ def clean_json(data,res_1,cost):
         if "ledger_result" in data:
             for key, sub_data in data["ledger_result"].items():
                 if isinstance(sub_data, dict):
-                    for target_key in ["대지위치", "도로명주소", "면적"]:
+                    for target_key in ["대지위치", "도로명주소", "면적", "위반건축물"]:
                         if target_key in sub_data:
                             analysis_data["ledger"][target_key] = sub_data[target_key]["text"]
 
@@ -303,7 +303,7 @@ def clean_json(data,res_1,cost):
         if "ledger_result" in data:
             for key, sub_data in data["ledger_result"].items():
                 if isinstance(sub_data, dict):
-                    for target_key in ["대지위치", "도로명주소", "면적"]:
+                    for target_key in ["대지위치", "도로명주소", "면적", "위반건축물"]:
                         if target_key in sub_data:
                             data["ledger_result"][key][target_key]["notice"] = result.get("notice", "")
                             data["ledger_result"][key][target_key]["solution"] = result.get("solution", "")
@@ -356,10 +356,9 @@ def clean_json(data,res_1,cost):
 
 계약서에서 보증금 및 월세 조건이 명확하게 작성되었는지 분석해줘.
 (보증금+채권최고액)과 건물의 가치를 비교해줘. 건물의 가치가 높으면 안전하고, 건물의 가치가 낮으면 위험하다고 경고해줘.
-보증금+채권최고액이 높으면 위험하다는 경고가 필요해
+보증금+채권최고액이 높으면 위험하다는 경고가 필요해.
 보증금과 월세 금액이 명확하게 기재되었는지 확인해줘. 
 관리비가 별도로 청구되는지, 포함된 항목(전기, 수도, 가스 등)이 적절히 기재되었는지 점검해줘.
-입금 계좌가 임대인 명의인지 확인하는 내용이 포함되어 있는지 분석해줘.
 분석 후 누락된 정보나 모호한 부분을 지적해줘."
 ⚠ **위 항목에서 문제가 발견될 경우, 해결 방법과 법적 보호 조치를 상세히 설명해줘.**  
 
