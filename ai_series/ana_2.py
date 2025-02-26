@@ -742,8 +742,8 @@ def building(data):
     return result['result']
 #실행(수정사항 포함)
 def request():
-    output_path = r"C:\Users\senbo\Desktop\python\rrr\test\solution.json"
-    data=process_all_json(r"C:\Users\senbo\Desktop\python\rrr\test")
+    output_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol_1.json"
+    data=process_all_json(r"C:\Users\senbo\Desktop\taba_project\ai_series\result")
     bounding_boxes = remove_bounding_boxes(data)
     res_1 = building(data)
     if res_1 != "nan":
