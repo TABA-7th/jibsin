@@ -393,7 +393,16 @@ def solution(data):
     return result
 
 def find_keys_in_json(data):
-
+    """
+    JSON 데이터에서 특정 키들을 찾아 결과를 반환하는 함수
+    
+    Args:
+        data (dict): 검색할 JSON 데이터
+        
+    Returns:
+        dict: 찾은 키와 해당 값
+    """
+    # 찾을 키 목록
     target_keys = [
         "임대인", "성명1", "성명2", "소유자_3", "소유자_4",  # 임대인/소유자 관련
         "위반건축물",  # 건축물 위반사항
@@ -403,11 +412,9 @@ def find_keys_in_json(data):
         "관리비_정액", "관리비_비정액",  # 관리비 관련
         "임대차기간", "계약기간",  # 기간 관련
         "특약", "특약사항",  # 특약 관련
-        "집합건물"  # 건물 유형
+        "집합건물", "면적"  # 건물 유형 및 면적 관련
     ]
     
-
-
     # 결과 저장할 딕셔너리
     result = {
         "contract": {},
@@ -436,12 +443,31 @@ def find_keys_in_json(data):
                 if key in target_keys:
                     result["registry_document"][key] = value
     
+    # 최상위 레벨에 있을 수 있는 면적 정보 확인
+    if isinstance(data, dict):
+        address_info = {}
+        
+        # 최상위 레벨에서 시도, 시군구, 동리 등의 주소 정보와 면적 정보 수집
+        for key in ["시도", "시군구", "동리", "동명", "호명", "건물명"]:
+            if key in data:
+                address_info[key] = data[key]
+        
+        # 면적 관련 정보가 있으면 별도 섹션에 추가
+        if address_info:
+            result["address_info"] = address_info
+        
+        # 공시가격 정보가 있으면 추가
+        if "공시가격" in data:
+            result["property_value"] = {"공시가격": data["공시가격"]}
+    
     return result
 
 
 def request():
     output_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol_1.json"
     data=process_all_json(r"C:\Users\senbo\Desktop\taba_project\ai_series\result")
+    with open(r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
     bounding_boxes = remove_bounding_boxes(data)
     res_1 = building(data)
     if res_1 != "nan" and res_1 != "NA":
