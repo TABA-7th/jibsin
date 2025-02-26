@@ -18,7 +18,7 @@ MODEL = "gpt-4o"
 client = openai.OpenAI(api_key=api_key)
 secret_key=os.getenv("secret_key")
 api_url=os.getenv("api_url")
-#계약서원본양식
+#--------------------------------[수정]------------------------------------------
 def base_xy(i):
     if i==1:
         rows = [
@@ -117,7 +117,7 @@ def base_xy(i):
     xy = pd.DataFrame(columns=['Text', 'x1', 'y1', 'x2', 'y2'])
     xy = pd.concat([xy, pd.DataFrame(rows, columns=xy.columns)], ignore_index=True)
     return xy
-#네이버클로바로 ocr 추출
+#------------------------------------------------------------------------------
 def cre_ocr(image):
     # target_size = (1240, 1753)
     # image_1 = cv2.resize(image, target_size, interpolation=cv2.INTER_AREA)
@@ -155,6 +155,8 @@ def cre_ocr(image):
         df = pd.DataFrame(all_data)  # OCR 결과를 데이터프레임으로 변환
         return df
 #ocr 기준으로 바운드 박스 위치 변환
+
+#--------------------------------[수정]------------------------------------------
 def read_ocr(i, xy, df, MODEL):
     # 데이터프레임을 JSON 형식으로 변환
     xy_json = xy.to_json(orient="records", force_ascii=False)
@@ -278,6 +280,9 @@ def read_ocr(i, xy, df, MODEL):
     # 응답 처리
     text = response.choices[0].message.content.strip()
     return text
+#-------------------------------------------------------------------------------
+
+
 def fix_json_format(text: str) -> str:
     """JSON 형식 오류를 자동으로 수정하는 함수."""
     text = text.strip()
@@ -322,6 +327,9 @@ def ttj(text: str, output_file: str) -> str:
         print(f"❌ JSON 변환 실패: {e}")
         print("📌 오류 발생 JSON 내용:\n", text)  # JSON 디버깅 출력
         return f"❌ JSON 변환 실패: {e}"
+
+
+#--------------------------------[추가]-------------------------------------------
 def edit_period(data):
   # 임대일과 종료일 찾기
   rental_start = None
@@ -362,6 +370,7 @@ def edit_period(data):
       if not rental_end:
           print("종료일을 찾을 수 없습니다.")
   return data
+#--------------------------------[수정]------------------------------------------
 def request(img_list, output_path):
     a = len(img_list)
     json_result = {}
