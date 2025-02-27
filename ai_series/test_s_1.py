@@ -331,11 +331,11 @@ def ttj(text: str, output_file: str) -> str:
         print("📌 오류 발생 JSON 내용:\n", text)  # JSON 디버깅 출력
         return f"❌ JSON 변환 실패: {e}"
 
-def request(img_list,output_path, output_path_2):
-# def request():
-    # img_list = [rf"C:\Users\senbo\Desktop\taba\python\reg\000{i}.jpg" for i in range(1, 4)]
-    # output_path = rf"C:\Users\senbo\Desktop\taba\python\rrr\test_bui_1.json"
-    # output_path_2 = r"C:\Users\senbo\Desktop\taba\python\rrr\test_3_1.jpg"
+# def request(img_list,output_path, output_path_2):
+def request():
+    img_list = [rf"C:\Users\senbo\Desktop\taba_project\test_sr\000{i}.jpg" for i in range(1, 4)]
+    output_path = rf"C:\Users\senbo\Desktop\taba_project\test_sr\test_bui_1.json"
+    output_path_2 = r"C:\Users\senbo\Desktop\taba_project\test_sr\test_3_1.jpg"
     
     merge_images(img_list,output_path_2)
     data = read_ocr(img_list,output_path)
@@ -346,4 +346,4 @@ def request(img_list,output_path, output_path_2):
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(organized_data, f, ensure_ascii=False, indent=2)
 
-# request()
+request()

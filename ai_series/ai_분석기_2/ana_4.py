@@ -42,7 +42,7 @@ def process_all_json(input_dir):
         files = {
             "coai": os.path.join(input_dir, "coai_result_a.json"),
             "ledger": os.path.join(input_dir, "ledger_result.json"),
-            "reg": os.path.join(input_dir, "test_bui_1.json")
+            "reg": os.path.join(input_dir, "reg_result.json")
         }
 
         with open(files["coai"], 'r', encoding='utf-8') as f:
@@ -344,13 +344,14 @@ def building(data):
         "task": "주소 유사도 분석 및 도로명 주소 추출",
         "location": result_dict,
         "addresses": address_list,
-        "instruction": "각 주소별 유사도를 분석하고 같은 장소인지 확인하여 모두 같은 장소라면 reg_건물주소를 result 값으로 출력해줘. 아니면 'nan'을 result 값으로 출력해줘. 다른 말은 들어가면 안돼"
+        "instruction": "각 주소별 유사도를 분석하고 같은 장소인지 확인하여 같은 장소라면 reg_건물주소를 result 값으로 출력해줘. 아니면 'nan'을 출력해줘. 다른 말은 들어가면 안돼"
     }
 
     prompt_json = json.dumps(prompt, ensure_ascii=False, indent=2)
     result = analyze_with_gpt(prompt_json)
     print(result)
-    return result['result']
+    return result['result'], used_keys
+#실행(수정사항 포함)
 
 def find_keys_in_json(data):
     """
@@ -405,7 +406,6 @@ def find_keys_in_json(data):
 
     
     return result
-
 def solution_1(data): #등본, 건축물 대장 상 위험 매물, 면적, 계약기간, 임대차 기간, 특약 요약, 주소
 
     promt = (f"""
@@ -442,7 +442,7 @@ def solution_1(data): #등본, 건축물 대장 상 위험 매물, 면적, 계�
 }
 ```
 
-면적/계약기간 불일치는 해당 필드에 notice와 solution을 추가해주세요.
+주소/면적/계약기간 불일치는 해당 필드에 notice와 solution을 추가해주세요.
 특약사항은 해당 필드에 notice로 요약 내용을 추가해주세요.
 
 문제가 없는 항목은 다음과 같이 추가해주세요:
@@ -514,8 +514,9 @@ f"""
 1. 보증금 일관성 확인:
    - 보증금_1과 보증금_2의 금액이 다른 경우 오류 메시지를 출력
    - 금액 차이가 있는 경우 두 보증금 필드 모두에 오류 표시
+
+
 원본 데이터 구조를 유지하면서, 분석한 항목에 'notice'와 'solution' 필드를 추가해주세요.
-이외의 다른 정보는 무시한다.
 예를 들어, 보증금_1과 보증금_2의 금액이 다른 경우:
 
 ```json
@@ -615,20 +616,12 @@ def request():
     output_path = r"C:\Users\senbo\Desktop\taba_project\ai_series\result\sol_1.json"
     data=process_all_json(r"C:\Users\senbo\Desktop\taba_project\ai_series\result")
     bounding_boxes = remove_bounding_boxes(data)
-    res_1 = building(data)
-    used_keys = [
-    "소재지",
-    "임차할부분",
-    "도로명주소",
-    "건물주소"
-]
-    # 디버깅: 타입과 정확한 값 확인
-    print(f"res_1의 타입: {type(res_1)}, 값: {repr(res_1)}")
 
-    # 보다 안전한 조건식
-    if res_1 and res_1 not in ["nan", "NA", "NaN", "NAN", float('nan'), None]:
+    res_1, used_keys = building(data)
+    if res_1 != "nan" and res_1 != "NA":
         try:
             res = price(res_1)
+            # res가 문제 없는지 확인
             if res and isinstance(res, dict) and '공시가격' in res:
                 cost = int(res['공시가격'])
                 for key in used_keys:
@@ -643,30 +636,10 @@ def request():
             cost = 'nan'
     else:
         cost = 'nan'
-        print(f"주소 불일치 감지: res_1 = {res_1}")
-        
-        # used_keys가 None이거나 비어있는지 확인
-        if used_keys is None:
-            print("used_keys가 None입니다. 기본 키를 사용합니다.")
-            used_keys = ["주소", "소재지", "건물주소"]  # 기본 키 설정
-        
-        # used_keys가 비어있는지 확인
-        if not used_keys:
-            print("used_keys가 비어있습니다. 기본 키를 사용합니다.")
-            used_keys = ["주소", "소재지", "건물주소"]  # 기본 키 설정
-        
-        print(f"사용할 키: {used_keys}")
-        
-        # data 내에서 주소 관련 키를 찾아 notice 추가
-        for section in ["contract", "building_registry", "registry_document"]:
-            if section in data:
-                for subsection_key, subsection in data[section].items():
-                    for key in used_keys:
-                        if key in subsection:
-                            subsection[key]["notice"] = "주소가 일치하지 않습니다"
-                            subsection[key]["solution"] = "주소 확인이 필요합니다."
-                            print(f"{section}.{subsection_key}.{key}에 notice 추가 완료")
-
+        for key in used_keys:
+            if key in data:
+                data[key]["notice"] = "주소가 일치하지 않습니다"
+                data[key]["solution"] = "주소 확인이 필요합니다."
     # JSON 데이터 분석 및 처리
     print(cost)
     # Bounding Box 복원
